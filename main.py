@@ -189,6 +189,18 @@ def get_recommendations(N, scores):
 
 
 # Assumes `ingreds` is a list of comma-separated ingredient strings
+st.set_page_config(page_title="Ex-stream-ly Cool App",
+                   page_icon="🧊",
+                   layout="wide",
+                   initial_sidebar_state="expanded",
+                   menu_items={
+                     'Get Help':
+                     'https://www.extremelycoolapp.com/help',
+                     'Report a bug':
+                     "https://www.extremelycoolapp.com/bug",
+                     'About':
+                     "# This is a header. This is an *extremely* cool app!"
+                   })
 st.title('Recipe Recommendations')
 image = Image.open('cooking.jpg')
 st.image(image,
@@ -196,28 +208,34 @@ st.image(image,
          width=300,
          use_column_width=True)
 ingreds = st.text_input('Enter ingredients (separated by commas):')
-if st.button('Get recommendation'):
-  if not ingreds:
-    st.warning('Please enter ingredients')
-  else:
-    data = pd.read_csv(config.RECIPES_PATH)
-    data['parsed'] = data.ingredients.apply(ingredient_parser)
-    corpus = get_and_sort_corpus(data)
-    model = Word2Vec.load(config.MODEL_PATH)
-    model.init_sims(replace=True)
-    tfidf = TfidfEmbeddingVectorizer(model)
-    tfidf.fit(corpus)
-    doc_vec = tfidf.transform(corpus)
-    doc_vec = [doc.reshape(1, -1) for doc in doc_vec]
-    assert len(doc_vec) == len(corpus)
-    input = ingreds
-    input = input.split(",")
-    input = ingredient_parser(input)
-    words1 = input.split()
-    input_embedding = tfidf.transform([words1])[0].reshape(1, -1)
-    cos_sim = map(lambda x: cosine_similarity(input_embedding, x)[0][0],
-                  doc_vec)
-    scores = list(cos_sim)
-    top_recipes = get_recommendations(5, scores)
-    st.write('Here are your top 5 recipe recommendations:')
-    st.write(top_recipes)
+with st.spinner("Loading..."):
+  if st.button('Get recommendation'):
+    if not ingreds:
+      st.warning('Please enter ingredients')
+    else:
+      image = Image.open("giphy.gif")
+      placeholder = st.image(image,
+               caption='Please wait while we generate recommendations...',
+               width=300)
+      data = pd.read_csv(config.RECIPES_PATH)
+      data['parsed'] = data.ingredients.apply(ingredient_parser)
+      corpus = get_and_sort_corpus(data)
+      model = Word2Vec.load(config.MODEL_PATH)
+      model.init_sims(replace=True)
+      tfidf = TfidfEmbeddingVectorizer(model)
+      tfidf.fit(corpus)
+      doc_vec = tfidf.transform(corpus)
+      doc_vec = [doc.reshape(1, -1) for doc in doc_vec]
+      assert len(doc_vec) == len(corpus)
+      input = ingreds
+      input = input.split(",")
+      input = ingredient_parser(input)
+      words1 = input.split()
+      input_embedding = tfidf.transform([words1])[0].reshape(1, -1)
+      cos_sim = map(lambda x: cosine_similarity(input_embedding, x)[0][0],
+                    doc_vec)
+      scores = list(cos_sim)
+      top_recipes = get_recommendations(5, scores)
+      st.write('Here are your top 5 recipe recommendations:')
+      st.write(top_recipes)
+      placeholder.empty()
