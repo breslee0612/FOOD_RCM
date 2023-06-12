@@ -176,7 +176,7 @@ def get_recommendations(N, scores):
   top = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:N]
   recommendation = pd.DataFrame(
     columns=['recipe', 'ingredients', 'url'])
-  count = 0
+  count = 1
   for i in top:
     recommendation.at[count,
                       'recipe'] = title_parser(df_recipes['recipe_name'][i])
